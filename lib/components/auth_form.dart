@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:shop/exceptions/auth_exception.dart';
 
 import '../models/auth.dart';
 
@@ -17,6 +18,10 @@ class _AuthFormState extends State<AuthForm> {
   final _formKey = GlobalKey<FormState>();
   bool _isLoading = false;
   AuthMode _authMode = AuthMode.Login;
+  Map<String, String> _authData = {
+    'email': '',
+    'password': '',
+  };
 
   bool _islogin() => _authMode == AuthMode.Login;
   bool _isSignup() => _authMode == AuthMode.Signup;
@@ -31,10 +36,21 @@ class _AuthFormState extends State<AuthForm> {
     });
   }
 
-  Map<String, String> _authData = {
-    'email': '',
-    'password': '',
-  };
+  void _showErrorDialog(String msg) {
+    showDialog(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: Text('Ocorreu um erro'),
+        content: Text(msg),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(),
+            child: Text('Fechar'),
+          ),
+        ],
+      ),
+    );
+  }
 
   Future<void> _submit() async {
     final isValid = _formKey.currentState?.validate() ?? false;
@@ -46,18 +62,24 @@ class _AuthFormState extends State<AuthForm> {
     setState(() => _isLoading = true);
 
     _formKey.currentState?.save();
-    Auth auth = Provider.of<Auth>(context, listen: false);
+    Auth auth = Provider.of(context, listen: false);
 
-    if (_islogin()) {
-      await auth.login(
-        _authData['email']!,
-        _authData['password']!,
-      );
-    } else {
-      await auth.signup(
-        _authData['email']!,
-        _authData['password']!,
-      );
+    try {
+      if (_islogin()) {
+        await auth.login(
+          _authData['email']!,
+          _authData['password']!,
+        );
+      } else {
+        await auth.signup(
+          _authData['email']!,
+          _authData['password']!,
+        );
+      }
+    } on AuthException catch (error) {
+      _showErrorDialog(error.toString());
+    } catch (error) {
+      _showErrorDialog('Ocorreu um erro inesperado!');
     }
 
     setState(() => _isLoading = false);
@@ -104,6 +126,7 @@ class _AuthFormState extends State<AuthForm> {
                         }),
               if (_isSignup())
                 TextFormField(
+                  //ss
                   decoration: InputDecoration(labelText: 'Confirmar Senha'),
                   obscureText: true,
                   validator: (_password) {

@@ -4,12 +4,15 @@ import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'package:shop/models/cart_item.dart';
-import '../utils/contants.dart';
+import '../utils/constants.dart';
 import 'cart.dart';
 import 'order.dart';
 
 class OrderList with ChangeNotifier {
+  final String _token;
   List<Order> _items = [];
+
+  OrderList(this._token, this._items);
 
   List<Order> get items {
     return [..._items];
@@ -22,7 +25,7 @@ class OrderList with ChangeNotifier {
   Future<void> addOrder(Cart cart) async {
     final date = DateTime.now();
     final response = await http.post(
-      Uri.parse('${Constants.ORDERS_BASE_URL}.json'),
+      Uri.parse('${Constants.ORDERS_BASE_URL}.json?auth=$_token'),
       body: jsonEncode(
         {
           'total': cart.totalAmount,
@@ -51,14 +54,14 @@ class OrderList with ChangeNotifier {
   }
 
   Future<void> loadOrders() async {
-    _items.clear();
+    List<Order> items = [];
     final response = await http.get(
-      Uri.parse('${Constants.ORDERS_BASE_URL}.json'),
+      Uri.parse('${Constants.ORDERS_BASE_URL}.json?auth=$_token'),
     );
     if (response.body == 'null') return;
     Map<String, dynamic> data = jsonDecode(response.body);
     data.forEach((orderId, orderData) {
-      _items.add(Order(
+      items.add(Order(
           id: orderId,
           date: DateTime.parse(orderData['date']),
           total: orderData['total'],
@@ -79,7 +82,7 @@ class OrderList with ChangeNotifier {
           //       isFavorite: productData['isFavorite']));
           ));
     });
+    _items = items.reversed.toList();
     notifyListeners();
-    print(data);
   }
 }

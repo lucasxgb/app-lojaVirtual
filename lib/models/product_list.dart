@@ -5,12 +5,15 @@ import 'package:http/http.dart' as http;
 import 'package:shop/exceptions/http_exception.dart';
 import 'package:shop/models/product.dart';
 
-import '../utils/contants.dart';
+import '../utils/constants.dart';
 
 /* Sempre que houver uma mudança no changeNotifier é importante avisar
 aos interessados (obsevers) */
 class ProductList with ChangeNotifier {
-  final List<Product> _items = [];
+  List<Product> _items = [];
+  String _token;
+
+  ProductList(this._token, this._items);
 
   int get itemsCount {
     return _items.length;
@@ -23,8 +26,9 @@ class ProductList with ChangeNotifier {
 
   Future<void> loadProducts() async {
     _items.clear();
+    /* Fazendo a requisição dizendo para o firebase que estou logado, pois passamos o token */
     final response = await http.get(
-      Uri.parse('${Constants.PRODUCT_BASE_URL}.json'),
+      Uri.parse('${Constants.PRODUCT_BASE_URL}.json?auth=$_token'),
     );
     if (response.body == 'null') return;
     Map<String, dynamic> data = jsonDecode(response.body);
@@ -45,7 +49,7 @@ class ProductList with ChangeNotifier {
 
   Future<void> addProduct(Product product) async {
     final response = await http.post(
-      Uri.parse('${Constants.PRODUCT_BASE_URL}.json'),
+      Uri.parse('${Constants.PRODUCT_BASE_URL}.json?auth=$_token'),
       body: jsonEncode(
         {
           'name': product.name,
@@ -94,7 +98,8 @@ class ProductList with ChangeNotifier {
     int index = _items.indexWhere((p) => p.id == product.id);
     if (index >= 0) {
       final response = await http.patch(
-        Uri.parse('${Constants.PRODUCT_BASE_URL}/${product.id}.json'),
+        Uri.parse(
+            '${Constants.PRODUCT_BASE_URL}/${product.id}.json?auth=$_token'),
         body: jsonEncode(
           {
             'name': product.name,
@@ -118,7 +123,8 @@ class ProductList with ChangeNotifier {
       notifyListeners();
 
       final response = await http.delete(
-        Uri.parse('${Constants.PRODUCT_BASE_URL}/${product.id}.json'),
+        Uri.parse(
+            '${Constants.PRODUCT_BASE_URL}/${product.id}.json?auth=$_token'),
       );
 
       if (response.statusCode >= 400) {

@@ -3,7 +3,7 @@ import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 
-import '../utils/contants.dart';
+import '../utils/constants.dart';
 
 class Product with ChangeNotifier {
   final String id;
@@ -28,11 +28,11 @@ class Product with ChangeNotifier {
 
   /* Alternando o valor de favorito, quando chamar o valor atual passa a ser 
   alternado*/
-  Future<void> toggleFavorite() async {
+  Future<void> toggleFavorite(String token) async {
     try {
       _toggleFavorite();
       final response = await http.patch(
-        Uri.parse('${Constants.PRODUCT_BASE_URL}/${id}.json'),
+        Uri.parse('${Constants.PRODUCT_BASE_URL}/${id}.json?auth=$token'),
         body: jsonEncode(
           {'isFavorite': isFavorite},
         ),
