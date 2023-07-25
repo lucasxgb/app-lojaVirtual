@@ -10,9 +10,10 @@ import 'order.dart';
 
 class OrderList with ChangeNotifier {
   final String _token;
+  final String _userId;
   List<Order> _items = [];
 
-  OrderList(this._token, this._items);
+  OrderList([this._token = '', this._userId = '', this._items = const []]);
 
   List<Order> get items {
     return [..._items];
@@ -56,8 +57,15 @@ class OrderList with ChangeNotifier {
   Future<void> loadOrders() async {
     List<Order> items = [];
     final response = await http.get(
-      Uri.parse('${Constants.ORDERS_BASE_URL}.json?auth=$_token'),
+      Uri.parse('${Constants.ORDERS_BASE_URL}/$_userId.json?auth=$_token'),
     );
+
+    final orderResponse = await http.get(
+      Uri.parse('${Constants.ORDERS_BASE_URL}/$_userId.json?auth=$_token'),
+    );
+
+    Map<String, dynamic> orderData =
+        orderResponse.body == 'null' ? {} : jsonDecode(orderResponse.body);
     if (response.body == 'null') return;
     Map<String, dynamic> data = jsonDecode(response.body);
     data.forEach((orderId, orderData) {

@@ -11,9 +11,10 @@ import '../utils/constants.dart';
 aos interessados (obsevers) */
 class ProductList with ChangeNotifier {
   List<Product> _items = [];
-  String _token;
+  final String _token;
+  final String _userId;
 
-  ProductList(this._token, this._items);
+  ProductList([this._token = '', this._userId = '', this._items = const []]);
 
   int get itemsCount {
     return _items.length;
@@ -31,15 +32,25 @@ class ProductList with ChangeNotifier {
       Uri.parse('${Constants.PRODUCT_BASE_URL}.json?auth=$_token'),
     );
     if (response.body == 'null') return;
+
+    final favResponse = await http.get(
+      Uri.parse('${Constants.USER_FAVORITES_URL}/$_userId.json?auth=$_token'),
+    );
+
+    Map<String, dynamic> favData =
+        favResponse.body == 'null' ? {} : jsonDecode(favResponse.body);
+
     Map<String, dynamic> data = jsonDecode(response.body);
     data.forEach((productId, productData) {
+      final isFavorite = favData[productId] ?? false;
       _items.add(Product(
-          id: productId,
-          name: productData['name'].toString(),
-          description: productData['description'].toString(),
-          price: double.parse(productData['price'].toString()),
-          imageUrl: productData['imageUrl'].toString(),
-          isFavorite: productData['isFavorite']));
+        id: productId,
+        name: productData['name'].toString(),
+        description: productData['description'].toString(),
+        price: double.parse(productData['price'].toString()),
+        imageUrl: productData['imageUrl'].toString(),
+        isFavorite: isFavorite,
+      ));
     });
     notifyListeners();
   }
@@ -56,7 +67,6 @@ class ProductList with ChangeNotifier {
           'description': product.description,
           'price': product.price,
           'imageUrl': product.imageUrl,
-          'isFavorite': product.isFavorite
         },
       ),
     );
@@ -64,12 +74,12 @@ class ProductList with ChangeNotifier {
     final id = jsonDecode(response.body)['name'];
     _items.add(
       Product(
-          id: id,
-          name: product.name,
-          description: product.description,
-          price: product.price,
-          imageUrl: product.imageUrl,
-          isFavorite: product.isFavorite),
+        id: id,
+        name: product.name,
+        description: product.description,
+        price: product.price,
+        imageUrl: product.imageUrl,
+      ),
     );
     notifyListeners();
   }
