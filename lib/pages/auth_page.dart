@@ -31,7 +31,7 @@ class AuthPage extends StatelessWidget {
                     horizontal: 50,
                   ),
                   //cascade operator
-                  transform: Matrix4.rotationZ(-8 * pi / 180)..translate(-10.0),
+                  //transform: Matrix4.rotationZ(-8 * pi / 180)..translate(-10.0),
                   decoration: BoxDecoration(
                     borderRadius: BorderRadius.circular(20),
                     color: Colors.deepOrange.shade900,
