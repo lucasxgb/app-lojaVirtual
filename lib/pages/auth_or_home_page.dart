@@ -17,11 +17,11 @@ class AuthOrHomePage extends StatelessWidget {
         /* Controlo do que está acontecendo com a future*/
         builder: (ctx, snapshot) {
           if (snapshot.connectionState == ConnectionState.waiting) {
-            return Center(
+            return const Center(
               child: CircularProgressIndicator(),
             );
           } else if (snapshot.error != null) {
-            return Center(
+            return const Center(
               child: Text('Ocorreu um erro!'),
             );
           } else {
