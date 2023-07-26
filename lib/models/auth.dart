@@ -4,6 +4,8 @@ import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'package:shop/exceptions/auth_exception.dart';
 
+import '../data/store.dart';
+
 class Auth with ChangeNotifier {
   String? _token;
   String? _email;
@@ -36,7 +38,9 @@ class Auth with ChangeNotifier {
     autenticação. Caso esteja tudo correto, atribui os valores recebidos da requisi
     ção as variáveis associadas.
 
-     */
+
+    Área de persistência
+    */
 
   Future<void> _authenticate(
       String email, String password, String urlFragment) async {
@@ -64,6 +68,14 @@ class Auth with ChangeNotifier {
           seconds: int.parse(body['expiresIn']),
         ),
       );
+
+      Store.saveMap('userData', {
+        'token': _token,
+        'email': _email,
+        'userId': _userId,
+        'expiryDate': _expiryDate!.toIso8601String(),
+      });
+
       _autoLogout();
       notifyListeners();
     }
@@ -75,6 +87,34 @@ class Auth with ChangeNotifier {
 
   Future<void> login(String email, String password) async {
     return _authenticate(email, password, 'signInWithPassword');
+  }
+
+  /* Método que redorta um future que tentará fazer o login automatico baseado na 
+  persistência de dados.
+
+  Aqui acontece uma série de validações, se estiver autenticado, se não tiver informações
+  no map ou se a data expirou, so após isso tentará o login.
+
+  */
+
+  Future<void> tryAutoLogin() async {
+    if (isAuth) return;
+
+    final userData = await Store.getMap('userData');
+    if (userData.isEmpty) return;
+
+    /* Data de expiração do token */
+    final expiryDate = DateTime.parse(userData['expiryDate']);
+    if (expiryDate.isBefore(DateTime.now())) return;
+
+    /* Restaurando os dados do usuário */
+    _token = userData['token'];
+    _email = userData['email'];
+    _userId = userData['userId'];
+    _expiryDate = expiryDate;
+
+    _autoLogout();
+    notifyListeners();
   }
 
   /* Método de logout da aplicação.
