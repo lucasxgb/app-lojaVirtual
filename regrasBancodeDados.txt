@@ -1,0 +1,27 @@
+Essas regras implicam em que a alteração de dados só poderá ser feita por um
+usuário que está logado, ou seja o usuário não pode alterar dados de 
+outro usuário.
+
+Só é capaz de ler e alterar a informação se for o usuário dono da 
+informação
+
+{
+  "rules": {
+    "orders": {
+      "$uid": {
+        ".write": "$uid === auth.uid",
+        ".read": "$uid === auth.uid",
+      },
+    },
+    "userFavorites": {
+    	"$uid": {
+      	".write": "$uid === auth.uid",
+        ".read": "$uid === auth.uid",
+      },
+    },
+    "products": {
+        ".write": "auth != null",
+        ".read": "auth != null",
+    }
+  }
+}

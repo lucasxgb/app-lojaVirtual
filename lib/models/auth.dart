@@ -121,6 +121,9 @@ class Auth with ChangeNotifier {
   
     Quando chamado esse método 'limpa' os valores das variáveis, que em nossa aplicação
     só é nulo quando o usuário não está logado.  
+   
+   Quando ocorrer o logout os dados do usuário que estavam salvos na persistência 
+   serão removidos.
    */
 
   void logout() {
@@ -129,7 +132,14 @@ class Auth with ChangeNotifier {
     _userId = null;
     _expiryDate = null;
     _clearLogoutTimer();
-    notifyListeners();
+
+    /* Por ser uma operação assíncrona eu posso querer que o restante
+    só aconteça após o método de remoção, com isso posso chamar o .then
+    e ai garanto que os ouvintes só serão notificados após a remoção dos dados
+    do usuário */
+    Store.remove('userData').then((_) {
+      notifyListeners();
+    });
   }
 
   /* Adicionando logout automático */
