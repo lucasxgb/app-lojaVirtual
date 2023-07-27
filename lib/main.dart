@@ -8,7 +8,7 @@ import 'package:shop/pages/orders_page.dart';
 import 'package:shop/pages/product_detail_page.dart';
 import 'package:shop/pages/products_page.dart';
 import 'package:shop/utils/app_routes.dart';
-
+import 'package:shop/utils/custom_route.dart';
 import 'models/oder_list.dart';
 import 'models/product_list.dart';
 import 'pages/product_form_page.dart';
@@ -48,6 +48,10 @@ class MyApp extends StatelessWidget {
       ],
       child: MaterialApp(
         theme: ThemeData(
+            pageTransitionsTheme: PageTransitionsTheme(builders: {
+              TargetPlatform.android: CustomPageTransitionsBuilder(),
+              TargetPlatform.iOS: CustomPageTransitionsBuilder(),
+            }),
             colorScheme: myTheme.colorScheme.copyWith(
               primary: Colors.purple,
               secondary: Colors.deepOrange,

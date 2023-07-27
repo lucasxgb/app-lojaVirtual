@@ -13,7 +13,11 @@ class AuthForm extends StatefulWidget {
   State<AuthForm> createState() => _AuthFormState();
 }
 
-class _AuthFormState extends State<AuthForm> {
+/* Mixin Singletickerprovider é responsável por fornecer um provider
+para um ticker responsável por apenas uma animação
+*/
+class _AuthFormState extends State<AuthForm>
+    with SingleTickerProviderStateMixin {
   final _passwordController = TextEditingController();
   final _formKey = GlobalKey<FormState>();
   bool _isLoading = false;
@@ -23,6 +27,64 @@ class _AuthFormState extends State<AuthForm> {
     'password': '',
   };
 
+  /* Adicionando animação */
+  AnimationController? _controller;
+  /*  Classe que recebe um tipo generio e esse tipo genérico é o
+  tipo de valor que eu quero animar */
+  Animation<double>? _opacityAnimation;
+  Animation<Offset>? _slideAnimation;
+
+  @override
+  void initState() {
+    super.initState();
+    /* Controller da animação, cara que vai ligar com a função chamada pelo ticker
+     dentro o intervalo de tempo definido*/
+    _controller = AnimationController(
+      vsync: this,
+      duration: const Duration(
+        milliseconds: 300,
+      ),
+    );
+
+    /* Atribuindo a animação de altura uma classe que herda animação
+    animação tween trabalha entre dois intervalos (inicio e fim) 
+    
+    e chamamos a funçao animate e passar para ele como paramêtro o que 
+    vai ser uma animation de um valor do tipo double. 
+    */
+    _opacityAnimation = Tween(
+      begin: 0.0,
+      end: 1.0,
+    ).animate(
+      CurvedAnimation(
+        parent: _controller!,
+        curve: Curves.linear,
+      ),
+    );
+
+    _slideAnimation = Tween<Offset>(
+      begin: Offset(0, -1.5),
+      end: Offset(0, 0),
+    ).animate(
+      CurvedAnimation(
+        parent: _controller!,
+        curve: Curves.linear,
+      ),
+    );
+
+    /*
+    será utilizado outra estrategia
+    _heightAnimation?.addListener(() => setState(() {}));
+    */
+  }
+
+  /* Dispose é responsável por liberar uma funcinalidade*/
+  @override
+  void dispose() {
+    super.dispose();
+    _controller?.dispose();
+  }
+
   bool _islogin() => _authMode == AuthMode.Login;
   bool _isSignup() => _authMode == AuthMode.Signup;
 
@@ -30,8 +92,12 @@ class _AuthFormState extends State<AuthForm> {
     setState(() {
       if (_islogin()) {
         _authMode = AuthMode.Signup;
+        /* chama o controller para ele iniciar a animação */
+        _controller?.forward();
       } else {
         _authMode = AuthMode.Login;
+        /* chama a animação fazendo o reverse, do final para o início */
+        _controller?.reverse();
       }
     });
   }
@@ -91,16 +157,22 @@ class _AuthFormState extends State<AuthForm> {
     return Card(
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
       elevation: 6,
-      child: Container(
+      child: AnimatedContainer(
+        duration: Duration(milliseconds: 300),
+        curve: Curves.easeIn,
+        /* relacionado ao animatedBuilder
+        Pega  o valor da altura da nossa classe de animação, e caso não esteja disponível 
+        chamará a lógica antiga
+        height: _heightAnimation?.value.height ?? (_islogin() ? 310 : 400),*/
         height: _islogin() ? 310 : 400,
         width: deviceSize.width * 0.75,
-        padding: EdgeInsets.all(16),
+        padding: const EdgeInsets.all(16),
         child: Form(
           key: _formKey,
           child: Column(
             children: [
               TextFormField(
-                  decoration: InputDecoration(labelText: 'E-mail'),
+                  decoration: const InputDecoration(labelText: 'E-mail'),
                   keyboardType: TextInputType.emailAddress,
                   onSaved: (email) => _authData['email'] = email ?? '',
                   validator: (_email) {
@@ -111,7 +183,7 @@ class _AuthFormState extends State<AuthForm> {
                     return null;
                   }),
               TextFormField(
-                  decoration: InputDecoration(labelText: 'Senha'),
+                  decoration: const InputDecoration(labelText: 'Senha'),
                   obscureText: true,
                   controller: _passwordController,
                   onSaved: (password) => _authData['password'] = password ?? '',
@@ -124,26 +196,49 @@ class _AuthFormState extends State<AuthForm> {
                           }
                           return null;
                         }),
-              if (_isSignup())
-                TextFormField(
-                  //ss
-                  decoration: InputDecoration(labelText: 'Confirmar Senha'),
-                  obscureText: true,
-                  validator: (_password) {
-                    final password = _password ?? '';
-                    if (password != _passwordController.text) {
-                      return 'Senhas informadas não conferem.';
-                    }
-                  },
+              /*Animação do campo confirmar senha
+              Tenho que mostrar ao container qual os parâmetros dentro do componente
+              que eu quero fazer a animação */
+              AnimatedContainer(
+                /* define o que será animado no container que é o campo de confirmar senha
+
+                  uma vez que quando estiver em login a altura dele será 0, e em registrar 
+                  será 60
+                */
+                constraints: BoxConstraints(
+                  minHeight: _islogin() ? 0 : 60,
+                  maxHeight: _islogin() ? 0 : 120,
                 ),
-              SizedBox(height: 20),
+                duration: Duration(milliseconds: 300),
+                curve: Curves.linear,
+                child: FadeTransition(
+                  opacity: _opacityAnimation!,
+                  child: SlideTransition(
+                    position: _slideAnimation!,
+                    child: TextFormField(
+                      //ss
+                      decoration:
+                          const InputDecoration(labelText: 'Confirmar Senha'),
+                      obscureText: true,
+                      validator: _islogin()
+                          ? null
+                          : (_password) {
+                              final password = _password ?? '';
+                              if (password != _passwordController.text) {
+                                return 'Senhas informadas não conferem.';
+                              }
+                              return null;
+                            },
+                    ),
+                  ),
+                ),
+              ),
+              const SizedBox(height: 20),
               if (_isLoading)
-                CircularProgressIndicator()
+                const CircularProgressIndicator()
               else
                 ElevatedButton(
                   onPressed: _submit,
-                  child: Text(
-                      _authMode == AuthMode.Login ? 'Entrar' : 'Registrar'),
                   style: ElevatedButton.styleFrom(
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(30),
@@ -151,8 +246,10 @@ class _AuthFormState extends State<AuthForm> {
                     padding:
                         const EdgeInsets.symmetric(vertical: 8, horizontal: 30),
                   ),
+                  child: Text(
+                      _authMode == AuthMode.Login ? 'Entrar' : 'Registrar'),
                 ),
-              Spacer(),
+              const Spacer(),
               TextButton(
                 onPressed: _switchAuthMode,
                 child:

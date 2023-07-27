@@ -20,8 +20,9 @@ class AppDrawer extends StatelessWidget {
             leading: Icon(Icons.shop),
             title: Text('Loja'),
             onTap: () {
-              Navigator.of(context)
-                  .pushReplacementNamed(AppRoutes.AUTH_OR_HOME);
+              Navigator.of(context).pushReplacementNamed(
+                AppRoutes.AUTH_OR_HOME,
+              );
             },
           ),
           Divider(),
@@ -29,7 +30,13 @@ class AppDrawer extends StatelessWidget {
             leading: Icon(Icons.payment),
             title: Text('Pedidos'),
             onTap: () {
-              Navigator.of(context).pushReplacementNamed(AppRoutes.ORDERS);
+              Navigator.of(context).pushReplacementNamed(
+                AppRoutes.ORDERS,
+              );
+              /* Chamada da classe criada para realizara  animação 
+              Navigator.of(context).pushReplacement(
+                CustomRoute(builder: (ctx) => OrdersPage()),
+              );*/
             },
           ),
           Divider(),
